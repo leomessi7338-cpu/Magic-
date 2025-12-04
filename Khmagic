@@ -1,0 +1,51 @@
+import random
+from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters, InlineQueryHandler
+
+import os
+TOKEN = os.getenv("BOT_TOKEN")
+
+hearts = ["❤️", "🤍", "💙", "💜", "💛", "🔥", "⭐"]
+
+def make_art(text):
+    art = ""
+    for i in range(9):
+        line = ""
+        for j in range(9):
+            line += random.choice(hearts) if random.random() > 0.35 else "🤍"
+        art += line + "\n"
+    art += f"\n@Khmagiccc_bot orqali\n💬 Soʻz: {text}"
+    return art
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Salom! ❤️ Soʻz yoki ism yubor — men yurakli emoji-art qilib beraman.\n"
+        "Istalgan chatda ham ishlatish uchun:\n@Khmagiccc_bot soʻz"
+    )
+
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    art = make_art(text)
+    await update.message.reply_text(art)
+
+async def inline_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.inline_query.query
+    if not query:
+        return
+    art = make_art(query)
+    results = [
+        InlineQueryResultArticle(
+            id="1",
+            title="Khmagic yurakli rasm",
+            input_message_content=InputTextMessageContent(art)
+        )
+    ]
+    await update.inline_query.answer(results)
+
+app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+app.add_handler(InlineQueryHandler(inline_handler))
+
+print("Khmagic ishlayapti...")
+app.run_polling()
